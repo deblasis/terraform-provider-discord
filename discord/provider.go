@@ -13,8 +13,15 @@ func Provider(version string) func() *schema.Provider {
 		p := &schema.Provider{
 			Schema: map[string]*schema.Schema{
 				"token": {
-					Type:        schema.TypeString,
-					Optional:    true,
+					Type:     schema.TypeString,
+					Optional: true,
+					// A bot token is a credential, so it must not reach a log.
+					// Upstream leaves this unmarked at every version through
+					// 2.7.0, while marking four webhook fields in the same tree,
+					// so it reads as an oversight rather than a decision. Without
+					// it the value can appear unredacted in a TF_LOG=TRACE dump
+					// of the ConfigureProvider gRPC call.
+					Sensitive:   true,
 					Description: "Discord API token, without the `Bot` prefix. This can be found in the Discord Developer Portal. This can also be set via the `DISCORD_TOKEN` environment variable.",
 				},
 				"client_id": {
@@ -23,8 +30,12 @@ func Provider(version string) func() *schema.Provider {
 					Description: "OAuth app client ID. Currently unused.",
 				},
 				"secret": {
-					Type:        schema.TypeString,
-					Optional:    true,
+					Type:     schema.TypeString,
+					Optional: true,
+					// Same reasoning as token. Currently unused by the provider,
+					// but it is an OAuth app secret by name and shape, and an
+					// unused field is exactly the one nobody notices leaking.
+					Sensitive:   true,
 					Description: "OAuth app secret. Currently unused.",
 				},
 			},
